@@ -4,7 +4,7 @@ import MessageList from "./components/MessageList";
 import Sidebar from "./components/Sidebar";
 import Welcome from "./components/Welcome";
 import { previewMessages } from "./data/previewMessages";
-import { askRag, deleteConversation, getConversation, listConversations } from "./services/ragApi";
+import { deleteConversation, getConversation, listConversations, streamRag } from "./services/ragApi";
 
 export default function App() {
   const preview = new URLSearchParams(location.search).get("preview") === "true";
@@ -42,11 +42,38 @@ export default function App() {
     }
     setBusy(true);
     try {
-      const data = await askRag(question, id);
-      const finalId = data.conversation_id;
-      const answer = { role: "assistant", content: data.answer, sources: data.reranked_sources || [], seconds: data.timings?.total_seconds };
-      setChats(current => current.map(chat => chat.id === temporaryId ? { ...chat, id: finalId, _id: finalId, messages: [...chat.messages, answer] } : chat));
-      setActiveId(finalId);
+      let currentId = temporaryId;
+      const updateAssistant = patch => setChats(current => current.map(chat => {
+        if (chat.id !== currentId) return chat;
+        const messages = [...chat.messages];
+        const last = messages.at(-1);
+        if (last?.role === "assistant" && last.streaming) messages[messages.length - 1] = { ...last, ...patch };
+        else messages.push({ role: "assistant", content: "", sources: [], streaming: true, ...patch });
+        return { ...chat, messages };
+      }));
+
+      await streamRag(question, id, event => {
+        if (event.type === "start") {
+          const finalId = event.conversation_id;
+          const previousId = currentId;
+          setChats(current => current.map(chat => chat.id === previousId ? { ...chat, id: finalId, _id: finalId } : chat));
+          currentId = finalId;
+          setActiveId(finalId);
+        } else if (event.type === "sources") {
+          updateAssistant({ sources: event.sources });
+        } else if (event.type === "token") {
+          setChats(current => current.map(chat => chat.id === currentId ? {
+            ...chat,
+            messages: chat.messages.map((message, index) => index === chat.messages.length - 1 && message.role === "assistant"
+              ? { ...message, content: message.content + event.token, streaming: true }
+              : message)
+          } : chat));
+        } else if (event.type === "timings") {
+          updateAssistant({ seconds: event.timings.total_seconds });
+        } else if (event.type === "done") {
+          updateAssistant({ streaming: false, messageId: event.message_id });
+        }
+      });
     } catch (error) {
       const answer = { role: "assistant", error: true, content: `I couldn't reach the RAG pipeline. ${error.message}` };
       setChats(current => current.map(chat => chat.id === temporaryId ? { ...chat, messages: [...chat.messages, answer] } : chat));

@@ -36,6 +36,27 @@ class RAGService:
                 self._pipeline = RAGPipeline()
             return self._pipeline.answer(question)
 
+    def initialize(self) -> None:
+        """Initialize connections and warm models before accepting requests."""
+        with self._lock:
+            if self._pipeline is None:
+                from pipeline import RAGPipeline
+                try:
+                    self._pipeline = RAGPipeline()
+                except Exception:
+                    if self._pipeline is not None:
+                        self._pipeline.close()
+                        self._pipeline = None
+                    raise
+
+    def stream_answer(self, question: str):
+        with self._lock:
+            if self._pipeline is None:
+                from pipeline import RAGPipeline
+
+                self._pipeline = RAGPipeline()
+            yield from self._pipeline.stream_answer(question)
+
     def close(self) -> None:
         if self._pipeline is not None:
             self._pipeline.close()
@@ -79,6 +100,9 @@ class AppHandler(SimpleHTTPRequestHandler):
         if path == "/api/conversations":
             self._create_conversation()
             return
+        if path == "/api/chat/stream":
+            self._stream_chat()
+            return
         if path != "/api/chat":
             self.send_error(HTTPStatus.NOT_FOUND)
             return
@@ -118,6 +142,55 @@ class AppHandler(SimpleHTTPRequestHandler):
                 HTTPStatus.INTERNAL_SERVER_ERROR,
             )
 
+    def _stream_chat(self) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length) or b"{}")
+            question = str(payload.get("question", "")).strip()
+            if not question:
+                self._send_json({"error": "Please enter a question."}, HTTPStatus.BAD_REQUEST)
+                return
+
+            conversation_id = str(payload.get("conversation_id", "")).strip()
+            if not conversation_id:
+                conversation_id = DATABASE.create_conversation(question)["_id"]
+            DATABASE.add_message(conversation_id, "user", question)
+
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self._send_sse({"type": "start", "conversation_id": conversation_id})
+
+            answer_parts: list[str] = []
+            sources: list[dict[str, Any]] = []
+            timings: dict[str, float] = {}
+            for event in SERVICE.stream_answer(question):
+                if event["type"] == "token":
+                    answer_parts.append(event["token"])
+                elif event["type"] == "sources":
+                    sources = event["sources"]
+                elif event["type"] == "timings":
+                    timings = event["timings"]
+                self._send_sse(event)
+
+            message = DATABASE.add_message(conversation_id, "assistant", "".join(answer_parts).strip(), sources)
+            self._send_sse({"type": "done", "conversation_id": conversation_id, "message_id": message["id"], "timings": timings})
+        except (BrokenPipeError, ConnectionResetError):
+            print("Streaming client disconnected", file=sys.stderr)
+        except Exception as exc:
+            print(f"Streaming chat failed: {exc}", file=sys.stderr)
+            try:
+                self._send_sse({"type": "error", "error": str(exc)})
+            except Exception:
+                pass
+
+    def _send_sse(self, data: dict[str, Any]) -> None:
+        payload = f"data: {json.dumps(data)}\n\n".encode("utf-8")
+        self.wfile.write(payload)
+        self.wfile.flush()
+
     def do_DELETE(self) -> None:
         path = urlparse(self.path).path
         if not path.startswith("/api/conversations/"):
@@ -153,7 +226,12 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--no-browser", action="store_true")
+    parser.add_argument("--lazy", action="store_true", help="Initialize the RAG pipeline on the first question.")
     args = parser.parse_args()
+
+    if not args.lazy:
+        print("Preparing the RAG pipeline before opening the app...")
+        SERVICE.initialize()
 
     server = ThreadingHTTPServer((args.host, args.port), AppHandler)
     url = f"http://{args.host}:{args.port}"

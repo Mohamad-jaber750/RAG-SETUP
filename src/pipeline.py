@@ -13,14 +13,14 @@ from weaviate.classes.init import (
 from weaviate.classes.query import MetadataQuery
 
 from generate import QwenGenerator
-from rerank import BGEReranker
 
 
 COLLECTION_NAME = "CISControls"
 EMBEDDING_MODEL = "embeddinggemma"
 
-RETRIEVAL_TOP_K = 20
+RETRIEVAL_TOP_K = 3
 RERANK_TOP_K = 3
+USE_CROSS_ENCODER_RERANKER = False
 
 
 EXPECTED_VECTOR_DIMENSIONS = 768
@@ -58,12 +58,22 @@ class RAGPipeline:
             self._detect_target_vector()
         )
 
-        # These Python objects are initialized once.
-        self.reranker = BGEReranker()
+        self.reranker = None
+        if USE_CROSS_ENCODER_RERANKER:
+            from rerank import BGEReranker
+            self.reranker = BGEReranker()
 
         self.generator = QwenGenerator(
             base_url=self.ollama_url,
         )
+
+        try:
+            print("Warming local models...")
+            self._embed_question("warmup")
+            self.generator.warmup()
+        except Exception:
+            self.close()
+            raise
 
         print("\nRAG pipeline ready")
 
@@ -400,15 +410,24 @@ class RAGPipeline:
 
         reranking_start = time.perf_counter()
 
-        ranked_results = (
-            self.reranker.rerank(
+        if self.reranker is not None:
+            ranked_results = self.reranker.rerank(
                 question=question,
                 retrieved_objects=(
                     retrieved_objects
                 ),
                 top_n=RERANK_TOP_K,
             )
-        )
+        else:
+            ranked_results = [
+                (
+                    obj,
+                    float(obj.metadata.score or 0.0)
+                    if obj.metadata is not None
+                    else 0.0,
+                )
+                for obj in retrieved_objects[:RERANK_TOP_K]
+            ]
 
         reranking_seconds = (
             time.perf_counter()
@@ -474,6 +493,44 @@ class RAGPipeline:
                 "total_seconds": (
                     total_seconds
                 ),
+            },
+        }
+
+    def stream_answer(self, question: str):
+        """Yield metadata, answer tokens, and final timings for SSE clients."""
+        total_start = time.perf_counter()
+        embedding_start = time.perf_counter()
+        query_vector = self._embed_question(question)
+        embedding_seconds = time.perf_counter() - embedding_start
+
+        retrieval_start = time.perf_counter()
+        retrieved_objects = self._retrieve(question=question, query_vector=query_vector)
+        retrieval_seconds = time.perf_counter() - retrieval_start
+
+        reranking_start = time.perf_counter()
+        if self.reranker is not None:
+            ranked_results = self.reranker.rerank(question=question, retrieved_objects=retrieved_objects, top_n=RERANK_TOP_K)
+        else:
+            ranked_results = [
+                (obj, float(obj.metadata.score or 0.0) if obj.metadata is not None else 0.0)
+                for obj in retrieved_objects[:RERANK_TOP_K]
+            ]
+        reranking_seconds = time.perf_counter() - reranking_start
+        sources = [self._serialize_candidate(obj, bge_score=float(score)) for obj, score in ranked_results]
+        yield {"type": "sources", "sources": sources}
+
+        generation_start = time.perf_counter()
+        for token in self.generator.stream_answer(question, ranked_results):
+            yield {"type": "token", "token": token}
+        generation_seconds = time.perf_counter() - generation_start
+        yield {
+            "type": "timings",
+            "timings": {
+                "embedding_seconds": embedding_seconds,
+                "retrieval_seconds": retrieval_seconds,
+                "reranking_seconds": reranking_seconds,
+                "generation_seconds": generation_seconds,
+                "total_seconds": time.perf_counter() - total_start,
             },
         }
 

@@ -14,6 +14,6 @@ export default function MessageList({ messages, busy }) {
           {message.seconds && <span className="timing">Answered in {message.seconds.toFixed(1)}s</span>}
         </div>
       </div>)}
-    {busy && <div className="message assistant"><div className="assistant-avatar">C</div><div className="assistant-body"><div className="typing"><i/><i/><i/></div></div></div>}
+    {busy && !messages.some(message => message.streaming) && <div className="message assistant"><div className="assistant-avatar">C</div><div className="assistant-body"><div className="typing"><i/><i/><i/></div></div></div>}
   </div>;
 }
