@@ -82,6 +82,23 @@ uv run jupyter lab        # or: uv run jupyter notebook
 Open [`notebooks/01_RAG_setup.ipynb`](notebooks/01_RAG_setup.ipynb), select this project's
 `.venv` as the kernel, and run the cells top to bottom.
 
+## Run the chat application
+
+Create a local `.env` from `.env.example` and add your MongoDB Atlas connection string.
+Then build the React client and start the Python server:
+
+```bash
+uv sync
+cd frontend
+pnpm install
+pnpm run build
+cd ..
+uv run python main.py --no-browser
+```
+
+Open `http://127.0.0.1:8000`. Ollama, Weaviate, and the populated `CISControls`
+collection must be available before sending RAG questions.
+
 > **First run is slow (one-time):** it downloads the embedding model (~130 MB) and the
 > layout model, and `hi_res` parsing of the full PDF takes a few minutes on CPU. Everything
 > is cached afterward.

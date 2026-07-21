@@ -16,8 +16,13 @@ dependencies = [
     "langchain-unstructured>=1.0.1",
     "langchain-weaviate>=0.0.6",
     "notebook>=7.5.6",
+    "pymongo>=4.17.0",
+    "python-dotenv>=1.2.2",
     "sentence-transformers>=5.5.1",
     "tiktoken>=0.13.0",
     "unstructured[pdf]>=0.22.31",
     "weaviate-client>=4.21.2",
 ]
+
+[project.scripts]
+rag-chat = "main:main"
