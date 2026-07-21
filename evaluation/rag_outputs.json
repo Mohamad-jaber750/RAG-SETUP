@@ -1,0 +1,116 @@
+[
+  {
+    "id": "G01",
+    "name": "Enterprise asset inventory contents and review frequency",
+    "input": "What information must the enterprise asset inventory contain, and how often should it be reviewed?",
+    "expected_output": "The inventory should include end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. It should record the network address (if static), hardware address, machine name, enterprise asset owner, department, and whether the asset has been approved to connect to the network. The inventory should be reviewed and updated bi-annually or more frequently.",
+    "actual_output": "The enterprise asset inventory must include:  \n1. **User/ administrator accounts** with details such as **name, username, start/stop dates, and department** (Source 1, Page 30, Section Safeguards).  \n2. **Device-specific information** including **network address (if static), hardware address, machine name, enterprise asset owner, department, and approval status for network connectivity** (Source 2, Page 69, Section \"Establish and Maintain Detailed Enterprise Asset Inventory\").  \n\n**Review frequency**:  \n- **Active accounts** must be validated **quarterly or more frequently** (Source 1, Page 30).  \n- The **entire inventory** should be reviewed **bi-annually or more frequently** (Source 2, Page 69).  \n- **Passive asset discovery tools** should update the inventory **weekly or more frequently** (Source 3, Page 69).  \n\nNo additional external knowledge is applied.",
+    "context": [
+      "Establish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. Review and update the inventory of all enterprise assets bi-annually, or more frequently."
+    ],
+    "retrieval_context": [
+      "Establish and maintain an inventory of all accounts managed in the enterprise. The inventory must include both user and administrator accounts. The inventory, at a minimum, should contain the person’s name, username, start/ stop dates, and department. Validate that all active accounts are authorized, on a recurring schedule at a minimum quarterly, or more frequently.",
+      "Establish and Maintain Detailed Enterprise Asset Inventory\n\nDevices\n\n-Identify-\n\n• • •\n\nEstablish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. For mobile end-user devices, MDM type tools can support this process, where appropriate. This inventory includes assets connected to the infrastructure physically, virtually, remotely, and those within cloud environments. Additionally, it includes assets that are regularly connected to the enterprise’s network infrastructure, even if they are not under control of the enterprise. Review and update the inventory of all enterprise assets bi-annually, or more frequently.",
+      "1.5 Use a Passive Asset Discovery Tool\n\n•\n\nUse a passive discovery tool to identify assets connected to the enterprise’s network. Review and use scans to update the enterprise’s asset inventory at least weekly, or more frequently.\n\n02 Inventory and Control of Software Assets\n\nActively manage (inventory, track, and correct) all software (operating systems and applications) on the network so that only authorized software is installed and can execute, and that unauthorized and unmanaged software is found and prevented from installation or execution."
+    ],
+    "source_metadata": [
+      {
+        "page_number": 30
+      },
+      {
+        "page_number": 69
+      },
+      {
+        "page_number": 69
+      }
+    ],
+    "additional_metadata": {
+      "id": "G01",
+      "category": "Asset Management",
+      "difficulty": "easy",
+      "pages": [
+        19
+      ],
+      "safeguard": "1.1",
+      "version": "v8",
+      "answerable": true
+    },
+    "generated_at": "2026-07-17T11:18:51.524361"
+  },
+  {
+    "id": "G02",
+    "name": "DHCP inventory update frequency",
+    "input": "How should DHCP logging be used to maintain the enterprise asset inventory, and how often?",
+    "expected_output": "Use DHCP logging on all DHCP servers or IP address management tools to update the enterprise asset inventory. Review and use the logs weekly or more frequently.",
+    "actual_output": "DHCP logging should be used to update the enterprise asset inventory by configuring DHCP servers or IPAM tools to generate logs. These logs are reviewed and utilized weekly or more frequently to maintain the inventory. The active discovery tool, which identifies assets, should be configured to run daily or more frequently to ensure timely updates.  \n\n**Relevant Pages:**  \n- **Source 1** (Page 19, Section \"Establish and Maintain Detailed Enterprise Asset Inventory\"): \"Use DHCP logging on all DHCP servers or IP address management tools to update the enterprise’s asset inventory. Review and use logs to update the enterprise’s asset inventory weekly, or more frequently.\"  \n- **Source 2** (Page 69, Section \"1.3 Utilize an Active Discovery Tool\"): \"Configure the active discovery tool to execute daily, or more frequently.\"",
+    "context": [
+      "Use DHCP logging on all DHCP servers or Internet Protocol (IP) address management tools to update the enterprise’s asset inventory. Review and use logs to update the enterprise’s asset inventory weekly, or more frequently."
+    ],
+    "retrieval_context": [
+      "Utilize an active discovery tool to identify assets connected to the enterprise’s network. Configure the active discovery tool to execute daily, or more frequently.\n\n1.4\n\nUse Dynamic Host Configuration Protocol (DHCP) Logging to Update Enterprise Asset Inventory\n\n|\n\nt identify ]\n\nUse DHCP logging on all DHCP servers or Internet Protocol (IP) address management tools to update the enterprise’s asset inventory. Review and use logs to update the enterprise’s asset inventory weekly, or more frequently.",
+      "1.3 Utilize an Active Discovery Tool\n\n. Detect ]\n\n• •\n\nUtilize an active discovery tool to identify assets connected to the enterprise’s network. Configure the active discovery tool to execute daily, or more frequently.\n\n1.4\n\nUse Dynamic Host Configuration Protocol (DHCP) Logging to Update Enterprise Asset Inventory Devices -Identify-\n\nUse DHCP logging on all DHCP servers or Internet Protocol (IP) address management tools to update the enterprise’s asset inventory. Review and use logs to update the enterprise’s asset inventory weekly, or more frequently.",
+      "Procedures and tools\n\nMost enterprise assets and software offer logging capabilities. Such logging should be activated, with logs sent to centralized logging servers. Firewalls, proxies, and remote access systems (Virtual Private Network (VPN), dial-up, etc.) should all be configured for verbose logging where beneficial. Retention of logging data is also important in the event an incident investigation is required.\n\nFurthermore, all enterprise assets should be configured to create access control logs when a user attempts to access resources without the appropriate privileges. To evaluate whether such logging is in place, an enterprise should periodically scan through its logs and compare them with the enterprise asset inventory assembled as part of CIS Control 1, in order to ensure that each managed asset actively connected to the network is periodically generating logs.\n\n26\n\nControl 08: Audit Log Management\n\nCIS Controls v8"
+    ],
+    "source_metadata": [
+      {
+        "page_number": 19
+      },
+      {
+        "page_number": 69
+      },
+      {
+        "page_number": 36
+      }
+    ],
+    "additional_metadata": {
+      "id": "G02",
+      "category": "Asset Management",
+      "difficulty": "easy",
+      "pages": [
+        19
+      ],
+      "safeguard": "1.4",
+      "version": "v8",
+      "answerable": true
+    },
+    "generated_at": "2026-07-17T11:18:58.698177"
+  },
+  {
+    "id": "G03",
+    "name": "Secure data disposal",
+    "input": "What does CIS require when securely disposing of data?",
+    "expected_output": "Dispose of data according to the enterprise's data management process, using a disposal process and method appropriate to the data's sensitivity.",
+    "actual_output": "CIS requires that the disposal process and method for data be commensurate with the data's sensitivity, as outlined in **SOURCE 3** (Page 70, Section 3.5). This ensures the disposal method aligns with the data's classification and risk level.",
+    "context": [
+      "Securely dispose of data as outlined in the enterprise's data management process. Ensure the disposal process and method are commensurate with the data sensitivity."
+    ],
+    "retrieval_context": [
+      "15.7 Securely Decommission Service Providers\n\nt Protect ]\n\nSecurely decommission service providers. Example considerations include user and service account deactivation, termination of data flows, and secure disposal of enterprise data within service provider systems.\n\nControl 15: Service Provider Management\n\nCIS Controls v8\n\nCONTROL\n\n16",
+      "Data Protection\n\nSAFEGUARDS TOTAL• 14 IG1• 6/14 IG2• 12/14 IG3• 14/14\n\nOVERVIEW\n\nDevelop processes and technical controls to identify, classify, securely handle, retain, and dispose of data.",
+      "3.5 Securely Dispose of Data\n\nGurw\n\nSecurely dispose of data as outlined in the enterprise’s data management process. Ensure the disposal process and method are commensurate with the data sensitivity."
+    ],
+    "source_metadata": [
+      {
+        "page_number": 54
+      },
+      {
+        "page_number": 23
+      },
+      {
+        "page_number": 70
+      }
+    ],
+    "additional_metadata": {
+      "id": "G03",
+      "category": "Data Protection",
+      "difficulty": "easy",
+      "pages": [
+        25
+      ],
+      "safeguard": "3.5",
+      "version": "v8",
+      "answerable": true
+    },
+    "generated_at": "2026-07-17T11:19:07.102156"
+  }
+]

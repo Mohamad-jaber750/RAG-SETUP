@@ -1,0 +1,151 @@
+{
+  "judge_model": "gemma3:4b",
+  "ollama_base_url": "http://172.20.176.1:11434",
+  "threshold": 0.5,
+  "created_at": "2026-07-17T11:21:47.399329",
+  "raw_result_type": "EvaluationResult",
+  "cases": [
+    {
+      "index": 1,
+      "input": "What information must the enterprise asset inventory contain, and how often should it be reviewed?",
+      "success": false,
+      "metrics": [
+        {
+          "name": "Faithfulness",
+          "score": 0.25,
+          "threshold": 0.5,
+          "success": false,
+          "reason": "The score is 0.25 because the actual output contradicts key details within the retrieval context by stating active account validation occurs on a recurring schedule and weekly asset discovery, while the context clearly defines it as quarterly reviews and bi-annual or more frequent reviews for active accounts, and passive asset discovery tools should be used to identify assets connected to the enterprise’s network.",
+          "error": null
+        },
+        {
+          "name": "Answer Relevancy",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the response accurately addresses both parts of the question – detailing the required content of an enterprise asset inventory and specifying the recommended review frequency.",
+          "error": null
+        },
+        {
+          "name": "Contextual Relevancy",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the retrieval context directly addresses the input's questions regarding what an enterprise asset inventory must contain ('The inventory must include both user and administrator accounts.', 'The inventory, at a minimum, should contain the person’s name, username, start/ stop dates, and department.') and how often it should be reviewed ('Review and update the inventory of all enterprise assets bi-annually, or more frequently.' , 'Review and use scans to update the enterprise’s asset inventory at least weekly, or more frequently.’). ",
+          "error": null
+        },
+        {
+          "name": "Contextual Precision",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because all retrieval contexts are ranked appropriately; the first node provides a direct answer to the question regarding what information must be in the inventory, the second node offers a comprehensive list of asset types, and the third node accurately specifies the review frequency. The relevance of each node is clearly established.",
+          "error": null
+        },
+        {
+          "name": "Contextual Recall",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the expected output comprehensively details the components of an asset inventory, including device types and required data fields, aligning perfectly with the retrieval context nodes (1, 2, and 3).",
+          "error": null
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "input": "How should DHCP logging be used to maintain the enterprise asset inventory, and how often?",
+      "success": true,
+      "metrics": [
+        {
+          "name": "Faithfulness",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because there are no contradictions identified in the provided list, indicating perfect faithfulness to the retrieval context.",
+          "error": null
+        },
+        {
+          "name": "Answer Relevancy",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the response directly addresses the question about using DHCP logging for enterprise asset inventory maintenance and frequency, with no irrelevant statements present.",
+          "error": null
+        },
+        {
+          "name": "Contextual Relevancy",
+          "score": 0.9,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 0.90 because the retrieval context directly addresses the input's questions about using DHCP logging for enterprise asset inventory maintenance and frequency, as evidenced by statements like 'Use DHCP logging on all DHCP servers or Internet Protocol (IP) address management tools to update the enterprise’s asset inventory.' and ‘Review and use logs to update the enterprise’s asset inventory weekly, or more frequently.’.",
+          "error": null
+        },
+        {
+          "name": "Contextual Precision",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the retrieval contexts successfully rank relevant nodes higher than irrelevant ones. The first, second, and third nodes all provide direct answers to the question about using DHCP logging for enterprise asset inventory and specifying the appropriate review frequency – ‘Use DHCP logging on all DHCP servers or IP address management tools to update the enterprise asset inventory.’, ‘Review and use the logs weekly or more frequently’, and ‘The text states 'Use DHCP logging on all DHCP servers or IP address management tools to update the enterprise asset inventory.'’. The fourth node discusses general logging practices but doesn't focus on the specific contribution of DHCP logs to maintaining the asset inventory.",
+          "error": null
+        },
+        {
+          "name": "Contextual Recall",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the retrieval context perfectly aligns with the expected output – specifically, node(s) in retrieval context 1 & 2 provide a comprehensive and direct response to the provided sentence regarding DHCP logging and log review for enterprise asset inventory updates.",
+          "error": null
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "input": "What does CIS require when securely disposing of data?",
+      "success": true,
+      "metrics": [
+        {
+          "name": "Faithfulness",
+          "score": 0.5,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 0.50 because the provided contradiction indicates a misalignment between the retrieval context, stating 'Data disposal needs to be commensurate with the data sensitivity,' and the actual output's claim about aligning disposal methods with data classification and risk level. This suggests an inconsistency in how data disposal should be approached.",
+          "error": null
+        },
+        {
+          "name": "Answer Relevancy",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the response directly and accurately addresses the question about CIS requirements for secure data disposal, with no irrelevant statements present.",
+          "error": null
+        },
+        {
+          "name": "Contextual Relevancy",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the retrieval context directly addresses the input's question about CIS requirements for securely disposing of data, as evidenced by statements like ‘secure disposal of enterprise data within service provider systems’ and ‘Develop processes and technical controls to identify, classify, securely handle, and dispose of data.’",
+          "error": null
+        },
+        {
+          "name": "Contextual Precision",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because all three retrieval contexts provide highly relevant information, specifically addressing CIS requirements for securely disposing of data. The first node highlights 'Securely Decommission Service Providers,' the second emphasizes a general data protection process, and the third directly states the need to dispose of data according to an enterprise’s data management process – aligning perfectly with the input question.",
+          "error": null
+        },
+        {
+          "name": "Contextual Recall",
+          "score": 1.0,
+          "threshold": 0.5,
+          "success": true,
+          "reason": "The score is 1.00 because the sentence 'Dispose of data according to the enterprise’s data management process, using a disposal process and method appropriate to the data’s sensitivity.' aligns perfectly with node(s) in retrieval context 3: 'Securely dispose of data as outlined in the enterprise’s data management process. Ensure the disposal process and method are commensurate with the data sensitivity.' providing a comprehensive explanation for data disposal practices.",
+          "error": null
+        }
+      ]
+    }
+  ],
+  "number_of_cases": 3
+}

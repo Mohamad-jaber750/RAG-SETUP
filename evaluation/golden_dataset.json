@@ -1,0 +1,282 @@
+[
+  {
+    "name": "Enterprise asset inventory contents and review frequency",
+    "input": "What information must the enterprise asset inventory contain, and how often should it be reviewed?",
+    "expected_output": "The inventory should include end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. It should record the network address (if static), hardware address, machine name, enterprise asset owner, department, and whether the asset has been approved to connect to the network. The inventory should be reviewed and updated bi-annually or more frequently.",
+    "context": [
+      "Establish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. Review and update the inventory of all enterprise assets bi-annually, or more frequently."
+    ],
+    "additional_metadata": {
+      "id": "G01",
+      "category": "Asset Management",
+      "difficulty": "easy",
+      "pages": [19],
+      "safeguard": "1.1",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "DHCP inventory update frequency",
+    "input": "How should DHCP logging be used to maintain the enterprise asset inventory, and how often?",
+    "expected_output": "Use DHCP logging on all DHCP servers or IP address management tools to update the enterprise asset inventory. Review and use the logs weekly or more frequently.",
+    "context": [
+      "Use DHCP logging on all DHCP servers or Internet Protocol (IP) address management tools to update the enterprise’s asset inventory. Review and use logs to update the enterprise’s asset inventory weekly, or more frequently."
+    ],
+    "additional_metadata": {
+      "id": "G02",
+      "category": "Asset Management",
+      "difficulty": "easy",
+      "pages": [19],
+      "safeguard": "1.4",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Secure data disposal",
+    "input": "What does CIS require when securely disposing of data?",
+    "expected_output": "Dispose of data according to the enterprise's data management process, using a disposal process and method appropriate to the data's sensitivity.",
+    "context": [
+      "Securely dispose of data as outlined in the enterprise's data management process. Ensure the disposal process and method are commensurate with the data sensitivity."
+    ],
+    "additional_metadata": {
+      "id": "G03",
+      "category": "Data Protection",
+      "difficulty": "easy",
+      "pages": [25],
+      "safeguard": "3.5",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+
+  {
+    "name": "Unauthorized assets handling",
+    "input": "What should an organization do when unauthorized enterprise assets are discovered?",
+    "expected_output": "Address unauthorized assets by removing them from the network, quarantining them, or updating the inventory so they become approved and managed according to the enterprise process.",
+    "context": [
+      "Ensure that unauthorized assets are either removed from the network, quarantined, or the inventory is updated in a timely manner to reflect that the asset is authorized."
+    ],
+    "expected_retrieval": {
+      "pages": [20],
+      "sections": ["1.2"]
+    },
+    "additional_metadata": {
+      "id": "G04",
+      "category": "Asset Management",
+      "difficulty": "easy",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Authorized software inventory",
+    "input": "What information should be maintained in the enterprise software inventory?",
+    "expected_output": "Maintain an inventory of authorized software including title, publisher, initial install or use date, version, and purpose.",
+    "context": [
+      "Establish and maintain a detailed inventory of licensed software authorized to execute in the enterprise. The software inventory should include title, publisher, initial install/use date, version, and purpose."
+    ],
+    "expected_retrieval": {
+      "pages": [21],
+      "sections": ["2.1"]
+    },
+    "additional_metadata": {
+      "id": "G05",
+      "category": "Software Management",
+      "difficulty": "easy",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Unsupported software",
+    "input": "What should organizations do with unsupported software?",
+    "expected_output": "Remove unsupported software or replace it with supported versions. If removal is not possible, implement compensating controls and document the associated risk.",
+    "context": [
+      "Ensure that only currently supported software is designated as authorized. Unsupported software should be removed or replaced where possible. If it cannot be removed, document the risk and apply compensating controls."
+    ],
+    "expected_retrieval": {
+      "pages": [22],
+      "sections": ["2.2"]
+    },
+    "additional_metadata": {
+      "id": "G06",
+      "category": "Software Management",
+      "difficulty": "medium",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Data encryption",
+    "input": "When should sensitive data be encrypted according to CIS Controls?",
+    "expected_output": "Sensitive data should be encrypted both while stored and while transmitted across networks using approved encryption mechanisms.",
+    "context": [
+      "Encrypt sensitive data at rest and in transit using approved cryptographic mechanisms appropriate to the sensitivity of the data."
+    ],
+    "expected_retrieval": {
+      "pages": [24],
+      "sections": ["3"]
+    },
+    "additional_metadata": {
+      "id": "G07",
+      "category": "Data Protection",
+      "difficulty": "easy",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Administrative privileges",
+    "input": "How should administrative privileges be managed?",
+    "expected_output": "Administrative privileges should be assigned only when necessary, documented, regularly reviewed, and removed when no longer required.",
+    "context": [
+      "Use dedicated administrative accounts, limit administrative privileges to authorized personnel, periodically review those privileges, and revoke them when they are no longer required."
+    ],
+    "expected_retrieval": {
+      "pages": [31],
+      "sections": ["5"]
+    },
+    "additional_metadata": {
+      "id": "G08",
+      "category": "Access Control",
+      "difficulty": "medium",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Multi-factor authentication",
+    "input": "Where should multi-factor authentication be required?",
+    "expected_output": "Require multi-factor authentication for administrative access, remote access, and other high-risk authentication scenarios.",
+    "context": [
+      "Require multi-factor authentication for administrative access, remote access, and other high-value authentication scenarios."
+    ],
+    "expected_retrieval": {
+      "pages": [33],
+      "sections": ["6"]
+    },
+    "additional_metadata": {
+      "id": "G09",
+      "category": "Access Control",
+      "difficulty": "easy",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Audit log retention",
+    "input": "Why should audit logs be retained?",
+    "expected_output": "Audit logs should be retained to support investigations, incident response, compliance, and forensic analysis.",
+    "context": [
+      "Retain audit logs according to enterprise policy to enable investigations, incident response, and forensic analysis."
+    ],
+    "expected_retrieval": {
+      "pages": [43],
+      "sections": ["8"]
+    },
+    "additional_metadata": {
+      "id": "G10",
+      "category": "Audit Logs",
+      "difficulty": "medium",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Vulnerability remediation",
+    "input": "How quickly should vulnerabilities be remediated?",
+    "expected_output": "Remediate vulnerabilities according to their severity and enterprise risk, prioritizing those that present the greatest risk.",
+    "context": [
+      "Remediate vulnerabilities within enterprise-defined timeframes based on severity and risk."
+    ],
+    "expected_retrieval": {
+      "pages": [48],
+      "sections": ["7"]
+    },
+    "additional_metadata": {
+      "id": "G11",
+      "category": "Vulnerability Management",
+      "difficulty": "medium",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Security awareness",
+    "input": "Who should receive security awareness training?",
+    "expected_output": "All workforce members should receive regular security awareness training appropriate to their role.",
+    "context": [
+      "Provide security awareness training to all workforce members on a regular basis and whenever significant changes occur."
+    ],
+    "expected_retrieval": {
+      "pages": [53],
+      "sections": ["14"]
+    },
+    "additional_metadata": {
+      "id": "G12",
+      "category": "Security Awareness",
+      "difficulty": "easy",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Incident response plan",
+    "input": "What should an incident response process include?",
+    "expected_output": "The incident response process should define preparation, detection, analysis, containment, eradication, recovery, communication, and lessons learned.",
+    "context": [
+      "Establish and maintain an incident response process that includes preparation, detection, analysis, containment, eradication, recovery, and post-incident activities."
+    ],
+    "expected_retrieval": {
+      "pages": [59],
+      "sections": ["17"]
+    },
+    "additional_metadata": {
+      "id": "G13",
+      "category": "Incident Response",
+      "difficulty": "hard",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Penetration testing",
+    "input": "Why should penetration testing be performed?",
+    "expected_output": "Penetration testing helps validate security controls by identifying exploitable weaknesses before attackers do.",
+    "context": [
+      "Conduct penetration testing to validate the effectiveness of security controls and identify exploitable weaknesses."
+    ],
+    "expected_retrieval": {
+      "pages": [61],
+      "sections": ["18"]
+    },
+    "additional_metadata": {
+      "id": "G14",
+      "category": "Penetration Testing",
+      "difficulty": "medium",
+      "version": "v8",
+      "answerable": true
+    }
+  },
+  {
+    "name": "Data recovery testing",
+    "input": "How often should data recovery procedures be tested?",
+    "expected_output": "Data recovery procedures should be tested regularly according to enterprise policy to verify that backups can be successfully restored.",
+    "context": [
+      "Test backup recovery procedures on a recurring basis to ensure that backups can be restored successfully."
+    ],
+    "expected_retrieval": {
+      "pages": [28],
+      "sections": ["11"]
+    },
+    "additional_metadata": {
+      "id": "G15",
+      "category": "Data Recovery",
+      "difficulty": "medium",
+      "version": "v8",
+      "answerable": true
+    }
+  }
+]
