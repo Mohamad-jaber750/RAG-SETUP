@@ -19,7 +19,7 @@ from generate import QwenGenerator
 COLLECTION_NAME = "CISControls"
 EMBEDDING_MODEL = "embeddinggemma"
 
-RETRIEVAL_TOP_K = 3
+RETRIEVAL_TOP_K = 6
 RERANK_TOP_K = 3
 USE_CROSS_ENCODER_RERANKER = False
 
@@ -379,6 +379,23 @@ class RAGPipeline:
             "bge_score": bge_score,
         }
 
+    @staticmethod
+    def _deduplicate_objects(objects: list[Any]) -> list[Any]:
+        """Remove repeated passages while preserving retrieval relevance order."""
+        unique_objects: list[Any] = []
+        seen_content: set[str] = set()
+
+        for obj in objects:
+            content = str((obj.properties or {}).get("content", ""))
+            fingerprint = " ".join(content.lower().split())
+            if fingerprint and fingerprint in seen_content:
+                continue
+            if fingerprint:
+                seen_content.add(fingerprint)
+            unique_objects.append(obj)
+
+        return unique_objects
+
     # --------------------------------------------------
     # PUBLIC METHOD
     # --------------------------------------------------
@@ -406,6 +423,7 @@ class RAGPipeline:
             question=question,
             query_vector=query_vector,
         )
+        retrieved_objects = self._deduplicate_objects(retrieved_objects)
 
         retrieval_seconds = (
             time.perf_counter()
@@ -509,6 +527,7 @@ class RAGPipeline:
 
         retrieval_start = time.perf_counter()
         retrieved_objects = self._retrieve(question=question, query_vector=query_vector)
+        retrieved_objects = self._deduplicate_objects(retrieved_objects)
         retrieval_seconds = time.perf_counter() - retrieval_start
 
         reranking_start = time.perf_counter()

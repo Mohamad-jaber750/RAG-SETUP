@@ -2,17 +2,28 @@ import { useId, useState } from "react";
 import PropTypes from "prop-types";
 import { sourcePropType } from "@/shared/propTypes";
 
+function deduplicateSources(sources) {
+  const seen = new Set();
+  return (sources || []).filter((source) => {
+    const fingerprint = (source.content || "").trim().toLowerCase().replace(/\s+/g, " ");
+    if (fingerprint && seen.has(fingerprint)) return false;
+    if (fingerprint) seen.add(fingerprint);
+    return true;
+  });
+}
+
 export default function Sources({ sources }) {
   const [open, setOpen] = useState(false);
   const regionId = useId();
+  const uniqueSources = deduplicateSources(sources);
 
-  if (!sources?.length) return null;
+  if (!uniqueSources.length) return null;
 
   return (
     <>
       <div className="message-meta">
         <span className="inline-citations" aria-label="Citations">
-          {sources.map((source, index) => (
+          {uniqueSources.map((source, index) => (
             <button
               type="button"
               className="citation"
@@ -34,11 +45,11 @@ export default function Sources({ sources }) {
           aria-expanded={open}
           aria-controls={regionId}
         >
-          ▱ {sources.length} source{sources.length === 1 ? "" : "s"}
+          ▱ {uniqueSources.length} source{uniqueSources.length === 1 ? "" : "s"}
         </button>
       </div>
       <div id={regionId} className={`sources ${open ? "open" : ""}`}>
-        {sources.map((source, index) => (
+        {uniqueSources.map((source, index) => (
           <article
             className="source-card"
             key={`${source.filename || "cis"}-${source.page_number}-${source.section_title || index}`}
