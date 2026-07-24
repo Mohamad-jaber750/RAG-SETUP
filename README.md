@@ -82,22 +82,48 @@ uv run jupyter lab        # or: uv run jupyter notebook
 Open [`notebooks/01_RAG_setup.ipynb`](notebooks/01_RAG_setup.ipynb), select this project's
 `.venv` as the kernel, and run the cells top to bottom.
 
-## Run the chat application
+## Run the authenticated chat application
 
-Create a local `.env` from `.env.example` and add your MongoDB Atlas connection string.
-Then build the React client and start the Python server:
+The application has three processes. Keep each command running in its own terminal.
+
+1. In WSL, configure `.env`, make Ollama reachable from WSL, and start the Python RAG API:
 
 ```bash
-uv sync
+WINDOWS_HOST_IP=$(ip route show | awk '/default/ { print $3 }')
+curl "http://${WINDOWS_HOST_IP}:11434/api/tags"
+uv run python main.py --host 0.0.0.0 --no-browser
+```
+
+If the `curl` command times out, Ollama on Windows is listening only on localhost. Set
+the Windows user environment variable `OLLAMA_HOST` to `0.0.0.0:11434`, restart Ollama,
+then put these values in `.env` (replace the placeholder with the address printed by
+`ip route show`):
+
+```dotenv
+OLLAMA_BASE_URL=http://WINDOWS_HOST_IP:11434
+WEAVIATE_HOST=WINDOWS_HOST_IP
+```
+
+2. In PowerShell, start the protected .NET middleware:
+
+```powershell
+dotnet run --project RagMiddleware/src/RagMiddleware.Api
+```
+
+3. Build the React UI once (or whenever frontend code changes):
+
+```powershell
 cd frontend
 pnpm install
 pnpm run build
-cd ..
-uv run python main.py --no-browser
 ```
 
-Open `http://127.0.0.1:8000`. Ollama, Weaviate, and the populated `CISControls`
-collection must be available before sending RAG questions.
+Open `http://localhost:5127`. The middleware serves the production React build. Port
+`8000` is the internal Python API and redirects browser visits to the public UI.
+
+For frontend development with hot reload, run `pnpm run dev` and open
+`http://localhost:5173` instead. The middleware also requires MongoDB, Google OAuth,
+and JWT settings described in `RagMiddleware/README.md`.
 
 > **First run is slow (one-time):** it downloads the embedding model (~130 MB) and the
 > layout model, and `hi_res` parsing of the full PDF takes a few minutes on CPU. Everything

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import time
 from typing import Any
@@ -29,13 +30,16 @@ HYBRID_ALPHA = 0.5
 
 class RAGPipeline:
     def __init__(self) -> None:
-        self.windows_host = (
-            self._get_windows_host()
+        self.windows_host = os.getenv(
+            "WEAVIATE_HOST",
+            self._get_windows_host(),
         )
 
-        self.ollama_url = (
-            f"http://{self.windows_host}:11434"
+        self.ollama_url = os.getenv(
+            "OLLAMA_BASE_URL",
+            f"http://{self.windows_host}:11434",
         )
+        print(f"Using Ollama at {self.ollama_url}")
 
         self.embedding_model = (
             OllamaEmbeddings(

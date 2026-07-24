@@ -1,134 +1,87 @@
 import { useEffect, useRef, useState } from "react";
-import Composer from "./components/Composer";
-import MessageList from "./components/MessageList";
-import Sidebar from "./components/Sidebar";
-import Welcome from "./components/Welcome";
-import { previewMessages } from "./data/previewMessages";
-import { deleteConversation, getConversation, listConversations, streamRag } from "./services/ragApi";
+import Composer from "@/components/Composer";
+import MessageList from "@/components/MessageList";
+import Sidebar from "@/components/Sidebar";
+import Welcome from "@/components/Welcome";
+import GuidedTour from "@/components/GuidedTour";
+import useAuth from "@/hooks/useAuth";
+import useChatWorkspace from "@/hooks/useChatWorkspace";
 
 export default function App() {
-  const preview = new URLSearchParams(location.search).get("preview") === "true";
-  const [chats, setChats] = useState([]);
-  const [activeId, setActiveId] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const { user, preview, signOut } = useAuth();
+  const workspace = useChatWorkspace({ enabled: Boolean(user), preview });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const conversation = useRef(null);
-  const activeChat = chats.find(chat => chat.id === activeId);
-  const messages = preview && !activeChat ? previewMessages : activeChat?.messages || [];
-
-  useEffect(() => {
-    if (preview) return;
-    listConversations()
-      .then(rows => setChats(rows.map(row => ({ ...row, id: row._id, messages: [] }))))
-      .catch(() => setChats([]));
-  }, [preview]);
 
   useEffect(() => {
     conversation.current?.scrollTo({
       top: conversation.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages, busy]);
-
-  const ask = async question => {
-    if (busy || preview) return;
-    const id = activeId;
-    const temporaryId = id || `pending-${Date.now()}`;
-    if (!id) {
-      setActiveId(temporaryId);
-      setChats(current => [{ id: temporaryId, title: question.slice(0, 80), messages: [{ role: "user", content: question }] }, ...current]);
-    } else {
-      setChats(current => current.map(chat => chat.id === id ? { ...chat, messages: [...chat.messages, { role: "user", content: question }] } : chat));
-    }
-    setBusy(true);
-    try {
-      let currentId = temporaryId;
-      const updateAssistant = patch => setChats(current => current.map(chat => {
-        if (chat.id !== currentId) return chat;
-        const messages = [...chat.messages];
-        const last = messages.at(-1);
-        if (last?.role === "assistant" && last.streaming) messages[messages.length - 1] = { ...last, ...patch };
-        else messages.push({ role: "assistant", content: "", sources: [], streaming: true, ...patch });
-        return { ...chat, messages };
-      }));
-
-      await streamRag(question, id, event => {
-        if (event.type === "start") {
-          const finalId = event.conversation_id;
-          const previousId = currentId;
-          setChats(current => current.map(chat => chat.id === previousId ? { ...chat, id: finalId, _id: finalId } : chat));
-          currentId = finalId;
-          setActiveId(finalId);
-        } else if (event.type === "sources") {
-          updateAssistant({ sources: event.sources });
-        } else if (event.type === "token") {
-          setChats(current => current.map(chat => chat.id === currentId ? {
-            ...chat,
-            messages: chat.messages.map((message, index) => index === chat.messages.length - 1 && message.role === "assistant"
-              ? { ...message, content: message.content + event.token, streaming: true }
-              : message)
-          } : chat));
-        } else if (event.type === "timings") {
-          updateAssistant({ seconds: event.timings.total_seconds });
-        } else if (event.type === "done") {
-          updateAssistant({ streaming: false, messageId: event.message_id });
-        }
-      });
-    } catch (error) {
-      const answer = { role: "assistant", error: true, content: `I couldn't reach the RAG pipeline. ${error.message}` };
-      setChats(current => current.map(chat => chat.id === temporaryId ? { ...chat, messages: [...chat.messages, answer] } : chat));
-    } finally {
-      setBusy(false);
-    }
-  };
+  }, [workspace.messages, workspace.busy]);
 
   const newChat = () => {
-    if (!busy) {
-      setActiveId(null);
-      setSidebarOpen(false);
-    }
-  };
-
-  const selectChat = async id => {
-    if (busy) return;
+    workspace.newChat();
     setSidebarOpen(false);
-    const cached = chats.find(chat => chat.id === id);
-    if (cached?.messages?.length) {
-      setActiveId(id);
-      return;
-    }
-    setBusy(true);
-    try {
-      const row = await getConversation(id);
-      setChats(current => current.map(chat => chat.id === id ? { ...row, id: row._id } : chat));
-      setActiveId(id);
-    } catch (error) {
-      setChats(current => current.map(chat => chat.id === id ? { ...chat, messages: [{ role: "assistant", error: true, content: `Could not load this conversation. ${error.message}` }] } : chat));
-      setActiveId(id);
-    } finally {
-      setBusy(false);
-    }
   };
 
-  const deleteChat = async id => {
-    if (busy) return;
-    await deleteConversation(id);
-    setChats(current => current.filter(chat => chat.id !== id));
-    if (id === activeId) setActiveId(null);
+  const selectChat = async (id) => {
+    setSidebarOpen(false);
+    await workspace.selectChat(id);
   };
 
-  return <div className="app-shell">
-    <Sidebar chats={chats} activeId={activeId} open={sidebarOpen} onClose={() => setSidebarOpen(false)} onNew={newChat} onSelect={selectChat} onDelete={deleteChat}/>
-    <main className="main">
-      <header className="topbar">
-        <button className="icon-button menu-button" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">☰</button>
-        <div className="model-title">CIS Controls Assistant <span>⌄</span></div>
-        <button className="icon-button" onClick={newChat} aria-label="New chat">✎</button>
-      </header>
-      <section className="conversation" ref={conversation} aria-live="polite">
-        {!messages.length && <Welcome onAsk={ask}/>}<MessageList messages={messages} busy={busy}/>
-      </section>
-      <Composer busy={busy || preview} onSubmit={ask}/>
-    </main>
-  </div>;
+  const handleSignOut = async () => {
+    await signOut();
+    workspace.reset();
+  };
+
+  return (
+    <div className="app-shell">
+      <Sidebar
+        chats={workspace.chats}
+        activeId={workspace.activeId}
+        open={sidebarOpen}
+        user={user}
+        onClose={() => setSidebarOpen(false)}
+        onNew={newChat}
+        onSelect={selectChat}
+        onDelete={workspace.deleteChat}
+        onLogout={handleSignOut}
+      />
+      <main className="main">
+        <header className="topbar">
+          <button
+            className="icon-button menu-button"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            ☰
+          </button>
+          <h1 className="model-title">
+            CIS Controls Assistant <span>⌄</span>
+          </h1>
+          <button className="icon-button" onClick={newChat} aria-label="New chat">
+            ✎
+          </button>
+        </header>
+        <section className="conversation" ref={conversation} aria-live="polite">
+          {workspace.error && (
+            <div className="page-error error-box" role="alert">
+              {workspace.error}
+            </div>
+          )}
+          {!workspace.messages.length && <Welcome onAsk={workspace.ask} />}
+          <MessageList
+            messages={workspace.messages}
+            busy={workspace.busy}
+            onRegenerate={workspace.regenerate}
+            onSelectVersion={workspace.selectVersion}
+            onFeedback={workspace.submitFeedback}
+          />
+        </section>
+        <Composer busy={workspace.busy || preview} onSubmit={workspace.ask} />
+      </main>
+      <GuidedTour />
+    </div>
+  );
 }

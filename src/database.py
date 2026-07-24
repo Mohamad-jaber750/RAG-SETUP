@@ -76,6 +76,8 @@ class MongoRepository:
             "content": content,
             "sources": sources or [],
             "feedback": None,
+            "versions": [],
+            "active_version": 0,
             "created_at": now,
         }
         result = self.conversations.update_one(
@@ -85,6 +87,81 @@ class MongoRepository:
         if result.matched_count == 0:
             raise KeyError("Conversation not found.")
         return self._serialize(message)
+
+    def get_message(self, conversation_id: str, message_id: str) -> dict[str, Any] | None:
+        row = self.conversations.find_one(
+            {"_id": conversation_id, "messages.id": message_id},
+            {"messages.$": 1},
+        )
+        return self._serialize(row["messages"][0]) if row and row.get("messages") else None
+
+    def add_message_version(
+        self,
+        conversation_id: str,
+        message_id: str,
+        content: str,
+        sources: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        message = self.get_message(conversation_id, message_id)
+        if message is None:
+            raise KeyError("Message not found.")
+        versions = message.get("versions") or [
+            {
+                "content": message["content"],
+                "sources": message.get("sources", []),
+                "created_at": message.get("created_at"),
+            }
+        ]
+        versions.append(
+            {
+                "content": content,
+                "sources": sources,
+                "created_at": datetime.now(UTC),
+            }
+        )
+        active_version = len(versions) - 1
+        result = self.conversations.update_one(
+            {"_id": conversation_id, "messages.id": message_id},
+            {
+                "$set": {
+                    "messages.$.content": content,
+                    "messages.$.sources": sources,
+                    "messages.$.versions": versions,
+                    "messages.$.active_version": active_version,
+                    "updated_at": datetime.now(UTC),
+                }
+            },
+        )
+        if result.matched_count == 0:
+            raise KeyError("Message not found.")
+        return self.get_message(conversation_id, message_id) or {}
+
+    def set_feedback(
+        self,
+        conversation_id: str,
+        message_id: str,
+        rating: str,
+        reasons: list[str],
+        comment: str,
+    ) -> dict[str, Any]:
+        feedback = {
+            "rating": rating,
+            "reasons": reasons,
+            "comment": comment,
+            "created_at": datetime.now(UTC),
+        }
+        result = self.conversations.update_one(
+            {"_id": conversation_id, "messages.id": message_id},
+            {
+                "$set": {
+                    "messages.$.feedback": feedback,
+                    "updated_at": datetime.now(UTC),
+                }
+            },
+        )
+        if result.matched_count == 0:
+            raise KeyError("Message not found.")
+        return self._serialize(feedback)
 
     @classmethod
     def _serialize(cls, value: Any) -> Any:

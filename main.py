@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import threading
 import webbrowser
@@ -72,6 +73,12 @@ class AppHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = urlparse(self.path).path
+        if path == "/":
+            ui_url = os.getenv("PUBLIC_UI_URL", "http://localhost:5127")
+            self.send_response(HTTPStatus.TEMPORARY_REDIRECT)
+            self.send_header("Location", ui_url)
+            self.end_headers()
+            return
         if path == "/api/health":
             try:
                 DATABASE.ping()
@@ -91,12 +98,17 @@ class AppHandler(SimpleHTTPRequestHandler):
             else:
                 self._send_json({"conversation": conversation})
             return
-        if path == "/":
-            self.path = "/index.html"
         super().do_GET()
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        parts = path.strip("/").split("/")
+        if len(parts) == 6 and parts[:2] == ["api", "conversations"] and parts[3] == "messages" and parts[5] == "regenerate":
+            self._regenerate(parts[2], parts[4])
+            return
+        if len(parts) == 6 and parts[:2] == ["api", "conversations"] and parts[3] == "messages" and parts[5] == "feedback":
+            self._save_feedback(parts[2], parts[4])
+            return
         if path == "/api/conversations":
             self._create_conversation()
             return
@@ -119,7 +131,7 @@ class AppHandler(SimpleHTTPRequestHandler):
                 return
 
             conversation_id = str(payload.get("conversation_id", "")).strip()
-            if not conversation_id:
+            if not conversation_id or DATABASE.get_conversation(conversation_id) is None:
                 conversation = DATABASE.create_conversation(question)
                 conversation_id = conversation["_id"]
             DATABASE.add_message(conversation_id, "user", question)
@@ -152,7 +164,7 @@ class AppHandler(SimpleHTTPRequestHandler):
                 return
 
             conversation_id = str(payload.get("conversation_id", "")).strip()
-            if not conversation_id:
+            if not conversation_id or DATABASE.get_conversation(conversation_id) is None:
                 conversation_id = DATABASE.create_conversation(question)["_id"]
             DATABASE.add_message(conversation_id, "user", question)
 
@@ -190,6 +202,63 @@ class AppHandler(SimpleHTTPRequestHandler):
         payload = f"data: {json.dumps(data)}\n\n".encode("utf-8")
         self.wfile.write(payload)
         self.wfile.flush()
+
+    def _regenerate(self, conversation_id: str, message_id: str) -> None:
+        try:
+            conversation = DATABASE.get_conversation(conversation_id)
+            if conversation is None:
+                self._send_json({"error": "Conversation not found."}, HTTPStatus.NOT_FOUND)
+                return
+            messages = conversation.get("messages", [])
+            index = next((i for i, item in enumerate(messages) if item["id"] == message_id), -1)
+            if index < 1 or messages[index].get("role") != "assistant":
+                self._send_json({"error": "Assistant message not found."}, HTTPStatus.NOT_FOUND)
+                return
+            question = next(
+                (item["content"] for item in reversed(messages[:index]) if item.get("role") == "user"),
+                "",
+            )
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self._send_sse({"type": "start", "conversation_id": conversation_id, "message_id": message_id})
+            answer_parts: list[str] = []
+            sources: list[dict[str, Any]] = []
+            for event in SERVICE.stream_answer(question):
+                if event["type"] == "token":
+                    answer_parts.append(event["token"])
+                elif event["type"] == "sources":
+                    sources = event["sources"]
+                self._send_sse(event)
+            message = DATABASE.add_message_version(
+                conversation_id, message_id, "".join(answer_parts).strip(), sources
+            )
+            self._send_sse({"type": "done", "message": message})
+        except Exception as exc:
+            print(f"Regeneration failed: {exc}", file=sys.stderr)
+            try:
+                self._send_sse({"type": "error", "error": str(exc)})
+            except Exception:
+                pass
+
+    def _save_feedback(self, conversation_id: str, message_id: str) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            payload = json.loads(self.rfile.read(length) or b"{}")
+            rating = str(payload.get("rating", ""))
+            if rating not in {"up", "down"}:
+                self._send_json({"error": "Rating must be 'up' or 'down'."}, HTTPStatus.BAD_REQUEST)
+                return
+            reasons = [str(reason)[:80] for reason in payload.get("reasons", [])][:8]
+            comment = str(payload.get("comment", "")).strip()[:1000]
+            feedback = DATABASE.set_feedback(conversation_id, message_id, rating, reasons, comment)
+            self._send_json({"feedback": feedback})
+        except json.JSONDecodeError:
+            self._send_json({"error": "Invalid request body."}, HTTPStatus.BAD_REQUEST)
+        except KeyError as exc:
+            self._send_json({"error": str(exc)}, HTTPStatus.NOT_FOUND)
 
     def do_DELETE(self) -> None:
         path = urlparse(self.path).path
@@ -235,10 +304,12 @@ def main() -> None:
 
     server = ThreadingHTTPServer((args.host, args.port), AppHandler)
     url = f"http://{args.host}:{args.port}"
-    print(f"CIS Controls Assistant is running at {url}")
+    public_ui_url = os.getenv("PUBLIC_UI_URL", "http://localhost:5127")
+    print(f"CIS Controls RAG API is running at {url}")
+    print(f"Open the authenticated UI at {public_ui_url}")
     print("Press Ctrl+C to stop.")
     if not args.no_browser:
-        threading.Timer(0.6, lambda: webbrowser.open(url)).start()
+        threading.Timer(0.6, lambda: webbrowser.open(public_ui_url)).start()
 
     try:
         server.serve_forever()
