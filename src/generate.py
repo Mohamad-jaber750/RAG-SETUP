@@ -23,20 +23,52 @@ class QwenGenerator:
             base_url=base_url,
             temperature=0.1,
             num_ctx=4096,
+            num_predict=180,
+            reasoning=False,
+            keep_alive="30m",
+            client_kwargs={"timeout": 60.0},
         )
 
         print("Qwen generator ready")
+
+    def warmup(self) -> None:
+        """Load the model before the first user request."""
+        self.model.invoke("Reply with only: OK")
+        print("Qwen generator warmed up")
 
     def generate_answer(
         self,
         question: str,
         ranked_results: list[tuple[Any, float]],
     ) -> str:
+        prompt = self._build_prompt(question, ranked_results)
+        if prompt is None:
+            return "I could not find enough relevant information in the provided CIS Controls documentation."
+
+        response = self.model.invoke(prompt)
+        content = response.content
+        return content.strip() if isinstance(content, str) else str(content).strip()
+
+    def stream_answer(
+        self,
+        question: str,
+        ranked_results: list[tuple[Any, float]],
+    ):
+        prompt = self._build_prompt(question, ranked_results)
+        if prompt is None:
+            yield "I could not find enough relevant information in the provided CIS Controls documentation."
+            return
+        for chunk in self.model.stream(prompt):
+            if isinstance(chunk.content, str) and chunk.content:
+                yield chunk.content
+
+    @staticmethod
+    def _build_prompt(
+        question: str,
+        ranked_results: list[tuple[Any, float]],
+    ) -> str | None:
         if not ranked_results:
-            return (
-                "I could not find enough relevant information "
-                "in the provided CIS Controls documentation."
-            )
+            return None
 
         context_parts: list[str] = []
 
@@ -81,7 +113,7 @@ class QwenGenerator:
             )
         )
 
-        prompt = f"""
+        return f"""
 You are a cybersecurity assistant answering questions about
 the CIS Critical Security Controls Version 8.
 
@@ -107,12 +139,3 @@ CONTEXT:
 
 FINAL ANSWER:
 """.strip()
-
-        response = self.model.invoke(prompt)
-
-        content = response.content
-
-        if isinstance(content, str):
-            return content.strip()
-
-        return str(content).strip()
